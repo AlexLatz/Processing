@@ -1,16 +1,13 @@
 color[] colors = {#ef476f, #ffd166, #74fbd7, #44c3ee, #8b79cd, #e9d6ec};
 StringList boxText = new StringList();
 Box[] boxes = new Box[6];
-boolean playback = true;
-int current = 0;
-ArrayList<Integer> order = new ArrayList<Integer>();
+Simon simon;
 
 class Box {
     private String text;
     private color col;
     private boolean chosen;
     private int x, y;
-    private int timeRendered;
     public Box(int num, String text, color col, boolean chosen) {
         if (num < 3) this.y = 100;
         else this.y = 400;
@@ -20,7 +17,6 @@ class Box {
         this.text = text;
         this.col = col;
         this.chosen = chosen;
-        this.timeRendered = 0;
     }
     public void draw() {
         strokeWeight(5);
@@ -30,8 +26,6 @@ class Box {
         if (chosen) {
             fill(0);
             text(text, x, y, 333, 300);
-            if (timeRendered > 0) timeRendered--;
-            else chosen = false;
         }
     }
     public void wrong() {
@@ -41,11 +35,45 @@ class Box {
         col = tmp;
     }
     public void choose() {
-        this.chosen = true;
-        this.timeRendered = 60;
+        this.chosen = !this.chosen;
     }
     public boolean isChosen() {
         return this.chosen;
+    }
+}
+
+class Simon {
+    private Box[] boxes;
+    private int current;
+    private ArrayList<Integer> order;
+    private int timeRendered;
+    private boolean playback;
+    public Simon(Box[] boxes) {
+        this.boxes = boxes;
+        this.current = 0;
+        this.order = new ArrayList<Integer>();
+        this.order.add((int)(Math.random()*6));
+        this.timeRendered = 0;
+        this.playback = false;
+    }
+    public void draw() {
+        if (this.playback) {
+            if (!boxes[order.get(current)].isChosen()) {
+                boxes[order.get(current)].choose();
+                timeRendered = 60;
+            } else {
+                if (timeRendered <= 0) {
+                    boxes[order.get(current)].choose();
+                    if (current < order.size()-1) current++;
+                    else {
+                        order.add((int)(Math.random()*6));
+                        playback = false;
+                        this.current = 0;
+                    }
+                } else timeRendered--;
+            }
+        }
+        for (Box box : boxes) box.draw();
     }
 }
 
@@ -61,18 +89,34 @@ void setup() {
     boxText.shuffle();
     for (int i = 0; i < 6; i++) {
         boxes[i] = new Box(i, boxText.get(i), colors[i], false);
-    } 
+    }
+    simon = new Simon(boxes);
 }
 
 void draw() {
     background(255, 255, 255);
     textAlign(CENTER, CENTER);
     textSize(40);
-    for (Box box : boxes) box.draw();
-    if (current < order.size() && playback) {
-        if (boxes[order.get(current)].isChosen()) current++; 
-    }
+    simon.draw();
 }
 
-void mouseClicked() {
+void mousePressed() {
+    if (!simon.playback) simon.playback = true;
+    if (mouseY < 400 && mouseY > 100) {
+        if (mouseX > 100 && mouseX <= 433) {
+            println("topleft");
+        } else if (mouseX > 433 && mouseX <= 766) {
+            println("topmid");
+        } else if (mouseX < 1000) {
+            println("topright");
+        }
+    } else if (mouseY < 700 && mouseY > 400) {
+        if (mouseX > 100 && mouseX <= 433) {
+            println("botleft");
+        } else if (mouseX > 433 && mouseX <= 766) {
+            println("botmid");
+        } else if (mouseX < 1000) {
+            println("botright");
+        }
+    }
 }
