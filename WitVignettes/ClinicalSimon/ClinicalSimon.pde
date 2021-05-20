@@ -23,20 +23,18 @@ class Box {
     }
     public void draw() {
         strokeWeight(5);
-        if (wrong) fill(#ff0000);
-        else if (chosen) fill(col);
+        if (chosen) fill(col);
         else fill(255, 255, 255);
         rect(x, y, 333, 300);
         if (chosen) {
             fill(0);
+            textSize(40);
+            textAlign(CENTER, CENTER);
             text(text, x, y, 333, 300);
         }
     }
-    public void choose() {
-        this.chosen = !this.chosen;
-    }
-    public void wrong() {
-        this.wrong = !this.wrong;
+    public void chosen(boolean value) {
+        this.chosen = value;
     }
     public boolean isChosen() {
         return this.chosen;
@@ -74,14 +72,20 @@ class Simon {
         //text(waitTime + " " + timeRendered + " " + playback + " " + wait + " " + current + " " + order.get(current) + " " + chosen + " " + second(), 100, 50);
         textAlign(LEFT);
         if (order.size() > boxText.size()) {
-            text("You've completed your patient interview. You can continue the bonus mode for an additional challenge or press space to leave now.", 100, 50); 
-            text("BONUS MODE", 600, 750);
+            textSize(20);
+            text("You've completed your patient interview. You can continue the bonus mode for an additional challenge or click outside of the boxes to leave now.", 100, 30, 1000, 100); 
+            textSize(40);
+            text("BONUS MODE", 0, 750);
+        } else if (order.size() > 8){ 
+            textSize(25);
+            text("You've completed enough of your interview. Click outside of the boxes if you want to leave now.", 100, 30, 1000, 100);
         }
-        else if (order.size() > 8) text("You've completed enough of your interview. Press space to leave now.", 100, 50);
-        textAlign(CENTER, CENTER);
         if (this.playback && !this.wait) {
+            textSize(35);
+            textAlign(CENTER);
+            text("PLAYING SEQUENCE", 600, 750);
             if (!boxes[order.get(current)].isChosen()) {
-                boxes[order.get(current)].choose();
+                boxes[order.get(current)].chosen(true);
                 if (current < boxText.size()) boxes[order.get(current)].setText(boxText.get(current));
                 else {
                     boxText.shuffle();
@@ -90,7 +94,7 @@ class Simon {
                 timeRendered = 60;
             } else {
                 if (timeRendered <= 0) {
-                    boxes[order.get(current)].choose();
+                    boxes[order.get(current)].chosen(false);
                     if (current < order.size()-1) current++;
                     else {
                         order.add((int)(random(6)));
@@ -104,11 +108,12 @@ class Simon {
             }
         } else if (!this.wait && chosen >= 0) {
             if (timeRendered <= 0) {
-                boxes[chosen].choose();
+                boxes[chosen].chosen(false);
                 chosen = -1;
                 if (current == order.size()-1) {
                     wait = true;
                     playback = true;
+                    for (Box box : boxes) box.chosen(false);
                     current = 0;
                 }
             } else timeRendered--;
@@ -116,13 +121,19 @@ class Simon {
             wait = false;
             waitTime = 60;
         } else if (wait) waitTime--;
+        else {
+            textSize(35);
+            textAlign(CENTER);
+            text("CHOOSE YOUR MOVE", 600, 750);
+        }
         for (Box box : boxes) box.draw();
     }
     public void playerChoose(int num) {
         if (!playback) {
             if (num == order.get(current)) {
                 chosen = num;
-                boxes[num].choose();
+                for (Box box : boxes) box.chosen(false);
+                boxes[num].chosen(true);
                 if (current < boxText.size()) boxes[num].setText(boxText.get(current));
                 else {
                     boxText.shuffle();
@@ -131,10 +142,10 @@ class Simon {
                 current++;
                 timeRendered = 60;
             } else {
-                boxes[num].wrong();
                 boxes[num].draw();
                 gameOver = true;
-                finalText = "GAME OVER\nYou messed up your bedside manner again! Dr. Bearing is starting to catch on your insincerity. She looks lonely as she realizes that you don't actually take the time to care about what she's going through."; 
+                if (order.size() <= boxText.size()) finalText = "GAME OVER\nYou messed up your bedside manner again! Dr. Bearing is starting to catch on your insincerity, and Dr. Kelekian may never let you graduate from being a fellow at this rate.";
+                else finalText = "GAME OVER\nYou completed " + order.size() + " interactions. Great job with your bedside manner! Dr. Kelekian is proud of you for taking on the extra challenge.";
             }
         }
     }
@@ -193,18 +204,14 @@ void mousePressed() {
             } else if (mouseX < 1000) {
                 simon.playerChoose(5);
             }
-        }
-    }
-}
-
-void keyPressed() {
-    if (keyCode == 49) {
-        if (simon.order.size() > simon.boxText.size()) {
-            finalText = "YOU WON!\nNice job remembering your clinical manner! Dr. Bearing looks reassured and Dr. Kelekian mentioned that your time as a medical fellow may be over shortly.";
-            gameOver = true;
-        } else if (simon.order.size() > 8) {
-            finalText = "GAME OVER\nYou forgot to say goodbye and thank Dr. Bearing! Dr. Kelekian can't believe you keep messing this up. Your future as a researcher might be impossible if you cannot survive being a medical fellow.";
-            gameOver = true;
+        } else {
+            if (simon.order.size() > simon.boxText.size()) {
+                finalText = "YOU WON!\nNice job remembering your clinical manner! Dr. Bearing looks reassured and Dr. Kelekian mentioned that your time as a medical fellow may be over shortly.";
+                gameOver = true;
+            } else if (simon.order.size() > 8) {
+                finalText = "GAME OVER\nYou forgot to say goodbye and thank Dr. Bearing! Dr. Kelekian can't believe you keep messing this up. Your future as a researcher might be impossible if you cannot survive being a medical fellow.";
+                gameOver = true;
+            }
         }
     }
 }
