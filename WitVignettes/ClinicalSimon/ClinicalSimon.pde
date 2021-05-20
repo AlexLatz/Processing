@@ -55,11 +55,11 @@ class Simon {
     private boolean wait;
     private int waitTime;
     private StringList boxText;
+    String finalText;
     public Simon(Box[] boxes, StringList boxText) {
         this.boxes = boxes;
         this.current = 0;
         this.order = new ArrayList<Integer>();
-        randomSeed(millis());
         this.order.add((int)(random(6)));
         this.timeRendered = 0;
         this.playback = true;
@@ -69,17 +69,20 @@ class Simon {
         this.boxText = boxText;
     }
     public void draw() {
+        fill(0);
+        //text(waitTime + " " + timeRendered + " " + playback + " " + wait + " " + current + " " + order.get(current) + " " + chosen + " " + second(), 100, 50);
+        textAlign(CENTER, CENTER);
         if (this.playback && !this.wait) {
             if (!boxes[order.get(current)].isChosen()) {
                 boxes[order.get(current)].choose();
-                boxes[order.get(current)].setText(boxText.get(current));
+                if (current < boxText.size()) boxes[order.get(current)].setText(boxText.get(current));
+                else boxes[order.get(current)].setText("How are you feeling today?");
                 timeRendered = 60;
             } else {
                 if (timeRendered <= 0) {
                     boxes[order.get(current)].choose();
                     if (current < order.size()-1) current++;
                     else {
-                        randomSeed(millis());
                         order.add((int)(random(6)));
                         while (order.get(order.size()-2) == order.get(order.size()-1)) {
                             order.set(order.size()-1, (int)(random(6)));
@@ -89,22 +92,20 @@ class Simon {
                     }
                 } else timeRendered--;
             }
-        } else if (!this.wait) {
-            if (chosen > 0) {
-                if (timeRendered <= 0) {
-                    boxes[chosen].choose();
-                    chosen = -1;
-                    if (current == order.size()-1) {
-                        wait = true;
-                        playback = true;
-                        current = 0;
-                    }
-                } else timeRendered--;
-            }
+        } else if (!this.wait && chosen >= 0) {
+            if (timeRendered <= 0) {
+                boxes[chosen].choose();
+                chosen = -1;
+                if (current == order.size()-1) {
+                    wait = true;
+                    playback = true;
+                    current = 0;
+                }
+            } else timeRendered--;
         } else if (waitTime <= 0) {
             wait = false;
             waitTime = 60;
-        } else waitTime--;
+        } else if (wait) waitTime--;
         for (Box box : boxes) box.draw();
     }
     public void playerChoose(int num) {
@@ -112,27 +113,37 @@ class Simon {
             if (num == order.get(current)) {
                 chosen = num;
                 boxes[num].choose();
-                boxes[num].setText(boxText.get(current));
+                if (current < boxText.size()) boxes[num].setText(boxText.get(current));
+                else boxes[order.get(current)].setText("How are you feeling today?");
                 current++;
                 timeRendered = 60;
             } else {
                 boxes[num].wrong();
                 boxes[num].draw();
                 gameOver = true;
+                finalText = "GAME OVER\nYou messed up your bedside manner again! Dr. Bearing is starting to catch on your insincerity. She looks lonely as she realizes that you don't actually take the time to care about what she's going through."; 
             }
         }
+    }
+    public String getFinalText() {
+        return this.finalText;
     }
 }
 
 void setup() {
     size(1200, 800);
     frameRate(60);
-    boxText.append("1");
-    boxText.append("2");
-    boxText.append("3");
-    boxText.append("4");
-    boxText.append("5");
-    boxText.append("6");
+    boxText.append("Hello Dr. Bearing.");
+    boxText.append("I'm Dr. Posner, clinical fellow working with Dr. Kelekian.");
+    boxText.append("Are you ready for your medical interview?");
+    boxText.append("How are you feeling today?");
+    boxText.append("How is your general health?");
+    boxText.append("Do you have any questions?");
+    boxText.append("When did you first notice your issue?");
+    boxText.append("That's all for your interview.");
+    boxText.append("Thank you for helping!");
+    boxText.append("I'll be checking in frequently to make sure you're OK.");
+    boxText.append("If you need anything, please let me know!");
     for (int i = 0; i < 6; i++) {
         boxes[i] = new Box(i, boxText.get(i), colors[i], false);
     }
@@ -142,8 +153,11 @@ void setup() {
 void draw() {
     textAlign(CENTER, CENTER);
     textSize(40);
-    if (!gameOver) {
-        background(255, 255, 255);
+    background(255, 255, 255);
+    if (gameOver) {
+        fill(0);
+        text(simon.getFinalText(), 0, 0, 1200, 800);
+    } else {
         simon.draw();
     }
 }
